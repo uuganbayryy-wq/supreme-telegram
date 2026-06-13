@@ -1,0 +1,291 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Хязгааргүй Машинтай Бултах Тоглоом 🚗💨</title>
+  <style>
+    body {
+      margin: 0; padding: 0;
+      background: linear-gradient(135deg, #ffffff, #f3f4f6, #e5e7eb);
+      font-family: 'Segoe UI', Arial, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #gameBox {
+      position: relative;
+      width: 360px;
+      height: 620px;
+      background: #ffffff;
+      border: 3px solid #111827;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #scoreBoard {
+      margin-top: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #111827;
+      background: #f3f4f6;
+      padding: 6px 25px;
+      border-radius: 20px;
+      border: 1px solid #e5e7eb;
+      z-index: 10;
+      letter-spacing: 1px;
+    }
+
+    /* 3 эгнээтэй зам */
+    #road {
+      width: 300px;
+      height: 420px;
+      background-color: #374151;
+      position: relative;
+      margin-top: 15px;
+      border: 3px solid #111827;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    /* Зам хуваагч цагаан шугамууд */
+    .lane-line {
+      position: absolute;
+      top: 0;
+      width: 4px;
+      height: 100%;
+      border-left: 4px dashed #ffffff;
+      opacity: 0.6;
+    }
+    #line1 { left: 98px; }
+    #line2 { left: 198px; }
+
+    /* 🏎️ СПОРТ МАШИН */
+    #playerCar {
+      position: absolute;
+      bottom: 20px;
+      width: 50px;
+      height: 75px;
+      background-color: #ef4444;
+      border-radius: 10px 10px 6px 6px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      transition: left 0.1s ease-out;
+      border: 2px solid #111827;
+    }
+    #playerCar::before {
+      content: '';
+      position: absolute;
+      top: 20px; left: 8px;
+      width: 30px; height: 20px;
+      background-color: #111827;
+      border-radius: 4px;
+    }
+    #playerCar::after {
+      content: '';
+      position: absolute;
+      bottom: -6px; left: 4px;
+      width: 38px; height: 6px;
+      background-color: #f59e0b;
+      border-radius: 2px;
+    }
+
+    /* 🪨 СААД / ХУУЧИН МАШИН */
+    .obstacle {
+      position: absolute;
+      width: 46px;
+      height: 70px;
+      background-color: #1f2937;
+      border-radius: 6px 6px 10px 10px;
+      border: 2px solid #111827;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+    .obstacle::before {
+      content: '';
+      position: absolute;
+      bottom: 15px; left: 8px;
+      width: 26px; height: 18px;
+      background-color: #ffffff;
+      border-radius: 4px;
+      opacity: 0.8;
+    }
+
+    /* Удирдлагын товчлуурууд */
+    #controls {
+      display: flex;
+      gap: 30px;
+      margin-top: 15px;
+      width: 100%;
+      justify-content: center;
+      z-index: 30;
+    }
+
+    .control-btn {
+      width: 100px;
+      height: 65px;
+      background-color: #111827;
+      color: #ffffff;
+      border: none;
+      border-radius: 15px;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+      touch-action: manipulation;
+    }
+
+    .control-btn:active {
+      background-color: #4b5563;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="gameBox">
+    <div id="scoreBoard">🏁 SCORE: <span id="score">0</span></div>
+    
+    <div id="road">
+      <div class="lane-line" id="line1"></div>
+      <div class="lane-line" id="line2"></div>
+      <div id="playerCar"></div>
+    </div>
+
+    <div id="controls">
+      <button class="control-btn" id="leftBtn">◀</button>
+      <button class="control-btn" id="rightBtn">▶</button>
+    </div>
+  </div>
+
+<script>
+  const road = document.getElementById("road");
+  const playerCar = document.getElementById("playerCar");
+  const scoreDisplay = document.getElementById("score");
+  const leftBtn = document.getElementById("leftBtn");
+  const rightBtn = document.getElementById("rightBtn");
+
+  const lanes = [25, 125, 225]; 
+  let currentLane = 1; 
+  let score = 0;
+  let gameOver = false;
+  let obstacles = [];
+  let gameInterval;
+  let spawnInterval;
+
+  function updateCarPosition() {
+    playerCar.style.left = lanes[currentLane] + "px";
+  }
+
+  function moveLeft() {
+    if (currentLane > 0 && !gameOver) {
+      currentLane--;
+      updateCarPosition();
+    }
+  }
+
+  function moveRight() {
+    if (currentLane < 2 && !gameOver) {
+      currentLane++;
+      updateCarPosition();
+    }
+  }
+
+  leftBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveLeft(); });
+  rightBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveRight(); });
+
+  leftBtn.addEventListener("click", moveLeft);
+  rightBtn.addEventListener("click", moveRight);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") moveLeft();
+    if (e.key === "ArrowRight") moveRight();
+  });
+
+  function createObstacle() {
+    if (gameOver) return;
+    
+    const obstacle = document.createElement("div");
+    obstacle.className = "obstacle";
+    obstacle.style.top = "-80px";
+    
+    const randomLane = Math.floor(Math.random() * 3);
+    obstacle.style.left = lanes[randomLane] + "px";
+    
+    const obstacleColors = ["#1e3a8a", "#d97706", "#059669"];
+    obstacle.style.backgroundColor = obstacleColors[Math.floor(Math.random() * 3)];
+    
+    road.appendChild(obstacle);
+    obstacles.push({
+      element: obstacle,
+      top: -80,
+      lane: randomLane
+    });
+  }
+
+  function updateGame() {
+    if (gameOver) return;
+
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      let obs = obstacles[i];
+      obs.top += 7; 
+      obs.element.style.top = obs.top + "px";
+
+      if (obs.top > 245 && obs.top < 375 && obs.lane === currentLane) {
+        endGame();
+        return;
+      }
+
+      if (obs.top > 420) {
+        obs.element.remove();
+        obstacles.splice(i, 1);
+        score++;
+        scoreDisplay.textContent = score;
+      }
+    }
+  }
+
+  // 💥 ЗӨВХӨН ЧИНИЙ ХҮССЭН 4 ҮГ ГАРЧ ИРЭХ ХЭСЭГ
+  function endGame() {
+    gameOver = true;
+    clearInterval(gameInterval);
+    clearInterval(spawnInterval);
+
+    obstacles.forEach(obs => obs.element.remove());
+
+    const roastMessages = [
+      "Ганцхан оноо авчихаад баярлаад байгаа юм уу? 💩",
+      "Миний дүү гар утас оролдохоо боль дооо хаха 💀",
+      "Чи үнэхээр муу байлаа 🤣",
+      "Азгүй юмаа"
+    ];
+
+    const randomMessage = roastMessages[Math.floor(Math.random() * roastMessages.length)];
+
+    alert(randomMessage + "\n\n🏁 SCORE: " + score);
+    resetGame();
+  }
+
+  function resetGame() {
+    score = 0;
+    scoreDisplay.textContent = score;
+    currentLane = 1;
+    updateCarPosition();
+    gameOver = false;
+    obstacles = [];
+    
+    gameInterval = setInterval(updateGame, 20);
+    spawnInterval = setInterval(createObstacle, 650); 
+  }
+
+  resetGame();
+</script>
+
+</body>
+</html>
